@@ -1,7 +1,7 @@
 import React, { PureComponent } from "react";
 import { Form, Icon, Input, Button } from "antd";
 import { withFormik, FormikErrors, FormikProps } from "formik";
-
+import * as yup from "yup";
 interface FormValues {
   email: string;
   password: string;
@@ -12,11 +12,21 @@ interface Props {
 }
 class C extends PureComponent<FormikProps<FormValues> & Props> {
   render() {
-    const { handleBlur, handleChange, handleSubmit, values } = this.props;
+    const {
+      handleBlur,
+      handleChange,
+      handleSubmit,
+      values,
+      touched,
+      errors
+    } = this.props;
     return (
       <Form style={{ display: "flex" }} onSubmit={handleSubmit}>
         <div style={{ width: 400, margin: "auto" }}>
-          <Form.Item>
+          <Form.Item
+            validateStatus={touched.email && errors.email ? "error" : ""}
+            help={touched.email && errors.email ? errors.email : ""}
+          >
             <Input
               name="email"
               prefix={<Icon type="user" style={{ color: "rgba(0,0,0,.25)" }} />}
@@ -26,7 +36,10 @@ class C extends PureComponent<FormikProps<FormValues> & Props> {
               onBlur={handleBlur}
             />
           </Form.Item>
-          <Form.Item>
+          <Form.Item
+            validateStatus={touched.password && errors.password ? "error" : ""}
+            help={touched.password && errors.password ? errors.password : ""}
+          >
             <Input
               name="password"
               prefix={<Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />}
@@ -59,8 +72,27 @@ class C extends PureComponent<FormikProps<FormValues> & Props> {
     );
   }
 }
+export const emailNotLongEnough = "email must be at least 3 characters";
+export const passwordNotLongEnough = "password must be at least 3 characters";
+export const invalidEmail = "email must be a valid email";
+
+const validationSchema = yup.object().shape({
+  email: yup
+    .string()
+    .min(3, emailNotLongEnough)
+    .max(255)
+    .email(invalidEmail)
+    .required(),
+  password: yup
+    .string()
+    .min(3, passwordNotLongEnough)
+    .max(255)
+    .required()
+});
 
 export const RegisterView = withFormik<Props, FormValues>({
+  validationSchema,
+  validateOnChange: false,
   mapPropsToValues: () => ({ email: "", password: "" }),
   handleSubmit: async (values, { props, setErrors }) => {
     const errors = await props.submit(values);
